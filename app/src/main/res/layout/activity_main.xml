@@ -1,25 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="center_horizontal"
     android:orientation="vertical"
     android:paddingLeft="20dp"
     android:paddingTop="80dp"
     android:paddingRight="20dp"
-    tools:context=".MainActivity"
-    android:gravity="center_horizontal">
+    tools:context=".MainActivity">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="40dp"
         android:text="Watermark Audio"
         android:textAlignment="center"
         android:textColor="#000000"
-        android:textSize="30dp"
-        android:layout_marginBottom="40dp"
-        />
+        android:textSize="30dp" />
+
     <EditText
         android:id="@+id/length"
         android:layout_width="match_parent"
@@ -28,14 +27,11 @@
         android:inputType="number"
         android:textAlignment="center" />
 
-    <EditText
-        android:id="@+id/frequency"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Recording frequency"
-        android:inputType="number"
-        android:textAlignment="center" />
+    <Spinner
+        android:id="@+id/spinner"
+        style="@style/spinner_style"
 
+        />
 
     <EditText
         android:id="@+id/fileName"
