@@ -7,9 +7,9 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -35,7 +35,7 @@ import java.util.Arrays;
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
     Context context;
 
-    private Button startbtn, stopbtn;
+    private              Button      startbtn;
     private              AudioRecord mRecorder;
     private              MediaPlayer mPlayer;
     private static final String      TAG                           = "#AUDIO#";
@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private              boolean  isRecording                 = false;
     private              Thread   recordingThread             = null;
     private static final int      RECORDER_BPP                = 16;
-    private              EditText lengthOfSample, frequencyOfSample, fileNameTxt;
+    private              EditText lengthOfSample, fileNameTxt, arrayLen;
     private int frequency, lengthInSec, bufferSize;
     private String             fileName;
     final   ArrayList<Byte>    audioByteArrayList = new ArrayList<>();
@@ -64,9 +64,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private              int              seqNum     = 0;
     private              boolean          skipBuffer = true;
     private              int              skipItr    = 0;
+    private              int              arraySize  = 4096;
     private              Spinner          spinner;
-    private static final String[]         values = {"8000", "16000", "32000" , "44100", "48000"};
+        private static final String[]         values     = {"8000", "16000", "32000", "44100", "48000"};
+//    private static final String[]         values     = {"8000"};
     ArrayAdapter<String> adapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,40 +77,17 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         frequency = 0;
 
         lengthOfSample = (EditText) findViewById(R.id.length);
-//        frequencyOfSample = (EditText) findViewById(R.id.frequency);
+        arrayLen = findViewById(R.id.arrayLength);
         fileNameTxt = (EditText) findViewById(R.id.fileName);
         startbtn = (Button) findViewById(R.id.startRec);
-        spinner = (Spinner)findViewById(R.id.spinner);
+        spinner = (Spinner) findViewById(R.id.spinner);
         spinner.setOnItemSelectedListener(this);
         adapter = new ArrayAdapter<String>(MainActivity.this,
-                android.R.layout.simple_spinner_item,values);
+                android.R.layout.simple_spinner_item, values);
 
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
-
         RequestPermissions();
-        startbtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (CheckPermissions()) {
-//                    frequency = Integer.parseInt(frequencyOfSample.getText().toString());
-                    lengthInSec = Integer.parseInt(lengthOfSample.getText().toString());
-                    fileName = fileNameTxt.getText().toString();
-                    Toast.makeText(getApplicationContext(), "Recording Started", Toast.LENGTH_LONG).show();
-                    startbtn.setEnabled(false);
-                    startRecording();
-                    new Handler().postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            startbtn.setEnabled(true);
-                        }
-                    }, (lengthInSec * 1000));
-                } else {
-                    RequestPermissions();
-                }
-            }
-        });
-
     }
 
 
@@ -160,10 +140,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         return (file.getAbsolutePath() + "/" + AUDIO_RECORDER_TEMP_FILE);
     }
 
+
     private void startRecording() {
 
         audioByteArrayList.clear();
-        Log.i(TAG, "frequency" +frequency);
+        Log.i(TAG, "frequency" + frequency);
 
         try {
             tempAudioDataFileName = getTempFilename();
@@ -207,99 +188,106 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 break;
         }
 
-        RECORDER_SAMPLERATE = frequency;
-        samplePerSequence = new int[sampleLengthInSecInShort * 4096];
+        try {
+            RECORDER_SAMPLERATE = frequency;
+            samplePerSequence = new int[sampleLengthInSecInShort * arraySize];
 
-        bufferSize = AudioRecord.getMinBufferSize(
-                RECORDER_SAMPLERATE,
-                RECORDER_CHANNELS,
-                RECORDER_AUDIO_ENCODING);
-        if (bufferSize != AudioRecord.ERROR_BAD_VALUE) {
-            // check if we can instantiate and have a success
-            mRecorder = new AudioRecord(MediaRecorder.AudioSource.MIC,
+            bufferSize = AudioRecord.getMinBufferSize(
                     RECORDER_SAMPLERATE,
                     RECORDER_CHANNELS,
-                    RECORDER_AUDIO_ENCODING,
-                    8192 * 15);
+                    RECORDER_AUDIO_ENCODING);
+            if (bufferSize != AudioRecord.ERROR_BAD_VALUE) {
+                // check if we can instantiate and have a success
+                mRecorder = new AudioRecord(MediaRecorder.AudioSource.MIC,
+                        RECORDER_SAMPLERATE,
+                        RECORDER_CHANNELS,
+                        RECORDER_AUDIO_ENCODING,
+                        8192 * 15);
 
-            if (mRecorder.getState() == AudioRecord.STATE_INITIALIZED) {
-                Log.i(TAG, "Recorder initialized & started");
-                mRecorder.startRecording();
-                isRecording = true;
-                int read = 0;
-                sampleForASequence.clear();
-                seqNum = 0;
-                while (true && isRecording) {
-                    short[] buffer = new short[4096];
-                    read = mRecorder.read(buffer, 0, buffer.length);
-                    if (read > 0) {
-                        Log.i(TAG, "buffer value " + skipBuffer);
+                if (mRecorder.getState() == AudioRecord.STATE_INITIALIZED) {
+                    Log.i(TAG, "Recorder initialized & started");
+                    mRecorder.startRecording();
+                    isRecording = true;
+                    int read = 0;
+                    sampleForASequence.clear();
+                    seqNum = 0;
+                    while (true && isRecording) {
+                        short[] buffer = new short[arraySize];
+                        read = mRecorder.read(buffer, 0, buffer.length);
+                        if (read > 0) {
+                            Log.i(TAG, "buffer value " + skipBuffer);
 
-                        if (skipBuffer) {
-                            if (frequency == 8000) {
-                                Log.i(TAG, "SKIPPING " + seqNum);
-                                skipBuffer = false;
-                                continue;
+                            if (skipBuffer) {
+                                if (frequency == 8000) {
+                                    if (skipItr < 1) {
+                                        Log.i(TAG, "SKIPPING " + seqNum);
+                                        skipItr++;
+                                        continue;
+                                    } else {
+                                        skipBuffer = false;
+                                    }
+                                }
+                            }
+                            Log.i(TAG, Integer.toString(seqNum));
+
+                            if (frequency == 16000) {
+                                if (skipItr < 2) {
+                                    Log.i(TAG, "SKIPPING for 16000 " + seqNum);
+                                    skipBuffer = false;
+                                    skipItr++;
+                                    continue;
+                                }
                             }
 
-                        }
-                        Log.i(TAG, Integer.toString(seqNum));
-
-                        if (frequency == 16000) {
-                            if (skipItr < 2) {
-                                Log.i(TAG, "SKIPPING for 16000 " + seqNum);
-                                skipBuffer = false;
-                                skipItr++;
-                                continue;
+                            if (frequency == 32000 || frequency == 44100) {
+                                if (skipItr < 4) {
+                                    Log.i(TAG, "SKIPPING for 32000, 44100 " + seqNum);
+                                    skipBuffer = false;
+                                    skipItr++;
+                                    continue;
+                                }
                             }
-                        }
-
-                        if (frequency == 32000 || frequency == 44100) {
-                            if (skipItr < 4) {
-                                Log.i(TAG, "SKIPPING for 32000, 44100 " + seqNum);
-                                skipBuffer = false;
-                                skipItr++;
-                                continue;
+                            if (frequency == 48000) {
+                                if (skipItr < 8) {
+                                    Log.i(TAG, "SKIPPING for 48000 " + seqNum);
+                                    skipBuffer = false;
+                                    skipItr++;
+                                    continue;
+                                }
                             }
-                        }
-                        if (frequency == 48000) {
-                            if (skipItr < 8) {
-                                Log.i(TAG, "SKIPPING for 48000 " + seqNum);
-                                skipBuffer = false;
-                                skipItr++;
-                                continue;
-                            }
-                        }
-                        sampleForASequence.add(buffer);
-                        seqNum++;
-                        addBytesToAudioArray(buffer);
-                        buffer = null;
+                            sampleForASequence.add(buffer);
+                            seqNum++;
+                            addBytesToAudioArray(buffer);
+                            buffer = null;
 
-                        if (sampleForASequence.size() >= sampleLengthInShortForASequence) {
-                            Log.i(TAG, "Sample recorded at :  " + System.currentTimeMillis() + "dd/MM/yyyy hh:mm:ss.SSS");
-                            sampleForASequence.clear();
-                            secondsRecorded++;
-                        }
-                        if (seqNum >= sampleLengthInSecInShort) {
-                            Log.i(TAG, "Recording over");
+                            if (sampleForASequence.size() >= sampleLengthInShortForASequence) {
+                                Log.i(TAG, "Sample recorded at :  " + System.currentTimeMillis() + "dd/MM/yyyy hh:mm:ss.SSS");
+                                sampleForASequence.clear();
+                                secondsRecorded++;
+                            }
+                            if (seqNum >= sampleLengthInSecInShort) {
+                                Log.i(TAG, "Recording over");
+                                stopRecording();
+                                break;
+                            }
+
+                        } else {
+                            Log.i(TAG, "Recorder over due to read > 0 is false");
                             stopRecording();
-                            break;
+                            return;
                         }
-
-                    } else {
-                        Log.i(TAG, "Recorder over due to read > 0 is false");
-                        stopRecording();
-                        return;
                     }
+                } else {
+                    stopRecording();
+                    Log.i(TAG, "Recorder not initialized");
                 }
             } else {
-                stopRecording();
-                Log.i(TAG, "Recorder not initialized");
+                Log.i(TAG, "Recording error: Buffer error_bad_value");
             }
-        } else {
-            Log.i(TAG, "Recording error: Buffer error_bad_value");
+        } catch (Exception | Error e) {
+            Log.e(TAG, "Exception while recording");
+            e.printStackTrace();
         }
-
     }
 
 
@@ -474,27 +462,19 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
         String label = parent.getItemAtPosition(position).toString();
-        int fre = Integer.parseInt(label);
-        Log.i(TAG, "frequency from spinner "+fre);
+        int frequency = Integer.parseInt(label);
+        Log.i(TAG, "frequency from spinner " + frequency);
 
-        switch (fre) {
+        switch (frequency) {
             case 8000:
-                frequency = 8000;
-                break;
             case 16000:
-                frequency = 16000;
-                break;
             case 32000:
-                frequency = 32000;
-                break;
             case 44100:
-                frequency = 44100;
-                break;
             case 48000:
-                frequency = 48000;
+                this.frequency = frequency;
                 break;
             default:
-                frequency = 8000;
+                this.frequency = 8000;
                 break;
         }
     }
@@ -502,4 +482,33 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     @Override
     public void onNothingSelected(AdapterView<?> parent) {
     }
+
+    public void startRecording(View view) {
+        lengthInSec = Integer.parseInt(lengthOfSample.getText().toString());
+        arraySize = (Integer.parseInt(arrayLen.getText().toString()))/2;
+        Log.i(TAG,"arraysize "+arraySize);
+        fileName = "" + System.currentTimeMillis();
+        startbtn.setEnabled(false);
+        Toast.makeText(getApplicationContext(), "Recording Started", Toast.LENGTH_LONG).show();
+        new Recording().execute();
+        startbtn.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                //enable the button
+                startbtn.setEnabled(true);
+            }
+        }, lengthInSec * 1000);
+//        startRecording();
+    }
+
+
+    private class Recording extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... voids) {
+            startRecording();
+            return null;
+        }
+    }
+
+
 }

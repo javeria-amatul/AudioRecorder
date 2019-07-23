@@ -20,10 +20,20 @@
         android:textSize="30dp" />
 
     <EditText
+        android:id="@+id/arrayLength"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="shorts/second"
+        android:text="8192"
+        android:inputType="number"
+        android:textAlignment="center" />
+
+
+    <EditText
         android:id="@+id/length"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Recording length"
+        android:hint="Recording length (in secs)"
         android:inputType="number"
         android:textAlignment="center" />
 
@@ -39,6 +49,7 @@
         android:layout_height="wrap_content"
         android:hint="FileName"
         android:inputType="text"
+        android:visibility="gone"
         android:textAlignment="center" />
 
 
@@ -47,6 +58,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="30dp"
-        android:text="Start Recording" />
+        android:text="Start Recording"
+        android:onClick="startRecording"/>
 
 </LinearLayout>
