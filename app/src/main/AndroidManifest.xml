@@ -3,7 +3,7 @@
     package="com.redbricklane.zapr.audiorecorder">
 
     <application
-        android:icon="@drawable/zapr_med_logo"
+        android:icon="@drawable/mic_icon"
         android:allowBackup="true"
         android:largeHeap="true"
         android:hardwareAccelerated="false"

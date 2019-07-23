@@ -484,21 +484,27 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     public void startRecording(View view) {
+
         lengthInSec = Integer.parseInt(lengthOfSample.getText().toString());
-        arraySize = (Integer.parseInt(arrayLen.getText().toString()))/2;
-        Log.i(TAG,"arraysize "+arraySize);
+        arraySize = (Integer.parseInt(arrayLen.getText().toString())) / 2;
+        Log.i(TAG, "arraysize " + arraySize);
         fileName = "" + System.currentTimeMillis();
-        startbtn.setEnabled(false);
-        Toast.makeText(getApplicationContext(), "Recording Started", Toast.LENGTH_LONG).show();
-        new Recording().execute();
-        startbtn.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                //enable the button
-                startbtn.setEnabled(true);
-            }
-        }, lengthInSec * 1000);
+        if (lengthInSec > 0) {
+            startbtn.setEnabled(false);
+            Toast.makeText(getApplicationContext(), "Recording Started", Toast.LENGTH_LONG).show();
+            new Recording().execute();
+            startbtn.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    //enable the button
+                    startbtn.setEnabled(true);
+                }
+            }, lengthInSec * 1000);
 //        startRecording();
+        }
+        else {
+            Toast.makeText(getApplicationContext(), "Enter seconds greater than 0", Toast.LENGTH_LONG).show();
+        }
     }
 
 
