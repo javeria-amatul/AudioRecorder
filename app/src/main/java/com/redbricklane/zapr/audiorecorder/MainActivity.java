@@ -214,6 +214,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     while (true && isRecording) {
                         short[] buffer = new short[arraySize];
                         read = mRecorder.read(buffer, 0, buffer.length);
+//                        for(int k =0; k<buffer.length; k++){
+//                            Log.i(TAG, "buffer index " + k+" buffer value: " + buffer[k]);
+//                        }
                         if (read > 0) {
                             Log.i(TAG, "buffer value " + skipBuffer);
 
@@ -255,6 +258,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                                     continue;
                                 }
                             }
+
                             sampleForASequence.add(buffer);
                             seqNum++;
                             addBytesToAudioArray(buffer);
@@ -303,6 +307,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     mRecorder = null;
                 }
                 mRecorder.release();
+
+                for(int k =0; k<audioByteArrayList.size(); k++){
+                    Log.i(TAG, "buffer index " + k+" buffer value: " + audioByteArrayList.get(k));
+                }
 
                 if (audioByteArrayList != null && audioByteArrayList.size() > 0) {
                     Object[] arrayOfObjects = audioByteArrayList.toArray();
@@ -436,7 +444,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         int iterations = input.length;
 
         ByteBuffer byteBuffer = ByteBuffer.allocate(input.length * 2);
-        for (int index = iterations - 1; index > 0; --index) {
+        for (int index = iterations - 1; index >= 0; --index) {
             byteBuffer.putShort(input[index]);
         }
 
