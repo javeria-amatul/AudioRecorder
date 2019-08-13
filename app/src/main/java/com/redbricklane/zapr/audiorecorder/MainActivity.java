@@ -22,12 +22,15 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -141,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
 
-    private void startRecording() {
+    private void startRecording() throws IOException {
 
         audioByteArrayList.clear();
         Log.i(TAG, "frequency" + frequency);
@@ -292,6 +295,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             Log.e(TAG, "Exception while recording");
             e.printStackTrace();
         }
+        wavToData();
     }
 
 
@@ -308,9 +312,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 }
                 mRecorder.release();
 
-                for(int k =0; k<audioByteArrayList.size(); k++){
-                    Log.i(TAG, "buffer index " + k+" buffer value: " + audioByteArrayList.get(k));
-                }
+//                for(int k =0; k<audioByteArrayList.size(); k++){
+//                    Log.i(TAG, "buffer index " + k+" buffer value: " + audioByteArrayList.get(k));
+//                }
 
                 if (audioByteArrayList != null && audioByteArrayList.size() > 0) {
                     Object[] arrayOfObjects = audioByteArrayList.toArray();
@@ -435,7 +439,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         header[41] = (byte) ((totalAudioLen >> 8) & 0xff);
         header[42] = (byte) ((totalAudioLen >> 16) & 0xff);
         header[43] = (byte) ((totalAudioLen >> 24) & 0xff);
-        Log.i(TAG, "WriteWaveFileHeader3");
+//        Log.i(TAG, "WriteWaveFileHeader3");
 
         out.write(header, 0, 44);
     }
@@ -492,7 +496,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     public void startRecording(View view) {
-
         lengthInSec = Integer.parseInt(lengthOfSample.getText().toString());
         arraySize = (Integer.parseInt(arrayLen.getText().toString())) / 2;
         Log.i(TAG, "arraysize " + arraySize);
@@ -519,9 +522,57 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private class Recording extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... voids) {
-            startRecording();
+            try {
+                startRecording();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             return null;
         }
+    }
+
+    private void wavToData() throws IOException {
+        try {
+//            String outputFile =
+//                    Environment.getExternalStorageDirectory().getAbsolutePath() + getAudioFilename()+ "";
+
+            InputStream inStream = getApplicationContext().getResources().openRawResource(R.raw.sample);
+            byte[] wavInBytes = new byte[inStream.available()];
+            Log.d("TEST", "********");
+            Log.d("TEST", "wavToData: "+wavInBytes.length);
+
+//            byte[] wavInBytes = convertStreamToByteArray(inStream);
+
+            short[] audioShorts = bytesToShort(wavInBytes);
+            Log.d("TEST", "********");
+            Log.d("TEST", "audioShorts: "+audioShorts.length);
+            int chunks = audioShorts.length/(lengthInSec*2);
+            Log.d("TEST", "chunks: "+chunks);
+
+            for (int i = 0; i < audioShorts.length;) {
+                i = i+28677;
+            }
+        }catch (Exception|Error e){
+            e.printStackTrace();
+        }
+    }
+
+    public static byte[] convertStreamToByteArray(InputStream is) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buff = new byte[10240];
+        int i = Integer.MAX_VALUE;
+        while ((i = is.read(buff, 0, buff.length)) > 0) {
+            baos.write(buff, 0, i);
+        }
+
+        return baos.toByteArray(); // be sure to close InputStream in calling function
+    }
+    public short[] bytesToShort(byte[] bytes) {
+
+        short[] shorts = new short[bytes.length/2];
+        ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shorts);
+
+        return shorts;
     }
 
 
