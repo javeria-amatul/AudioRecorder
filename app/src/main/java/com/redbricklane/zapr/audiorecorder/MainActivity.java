@@ -22,15 +22,12 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -52,8 +49,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private static final String   AUDIO_RECORDER_TEMP_FILE    = "record_temp.raw";
     private static final String   AUDIO_RECORDER_FILE_EXT_WAV = ".wav";
     private              boolean  isRecording                 = false;
-    private              Thread   recordingThread             = null;
-    private static final int      RECORDER_BPP                = 16;
     private              EditText lengthOfSample, fileNameTxt, arrayLen;
     private int frequency, lengthInSec, bufferSize;
     private String             fileName;
@@ -69,10 +64,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private              int              skipItr    = 0;
     private              int              arraySize  = 4096;
     private              Spinner          spinner;
-        private static final String[]         values     = {"8000", "16000", "32000", "44100", "48000"};
-//    private static final String[]         values     = {"8000"};
+    private static final String[]         values     = {"8000", "16000", "32000", "44100", "48000"};
     ArrayAdapter<String> adapter;
+    static Object[] EmptyObjArray = new Object[10000];
 
+    byte[]  bytes;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -217,9 +213,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     while (true && isRecording) {
                         short[] buffer = new short[arraySize];
                         read = mRecorder.read(buffer, 0, buffer.length);
-//                        for(int k =0; k<buffer.length; k++){
-//                            Log.i(TAG, "buffer index " + k+" buffer value: " + buffer[k]);
-//                        }
+
                         if (read > 0) {
                             Log.i(TAG, "buffer value " + skipBuffer);
 
@@ -270,6 +264,17 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                             if (sampleForASequence.size() >= sampleLengthInShortForASequence) {
                                 Log.i(TAG, "Sample recorded at :  " + System.currentTimeMillis() + "dd/MM/yyyy hh:mm:ss.SSS");
                                 sampleForASequence.clear();
+//                                writeToRaw();
+                                bytes = new byte[audioByteArrayList.size()];
+                                for(int i = 0; i < audioByteArrayList.size(); i++) {
+                                    bytes[i] = audioByteArrayList.get(i).byteValue();
+                                }
+                                Log.i(TAG, "Arr "+bytes.length);
+
+                                os.write(bytes, 0, bytes.length);
+                                audioByteArrayList.clear();
+                                bytes = null;
+
                                 secondsRecorded++;
                             }
                             if (seqNum >= sampleLengthInSecInShort) {
@@ -295,7 +300,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             Log.e(TAG, "Exception while recording");
             e.printStackTrace();
         }
-        wavToData();
     }
 
 
@@ -312,21 +316,19 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 }
                 mRecorder.release();
 
-//                for(int k =0; k<audioByteArrayList.size(); k++){
-//                    Log.i(TAG, "buffer index " + k+" buffer value: " + audioByteArrayList.get(k));
-//                }
 
-                if (audioByteArrayList != null && audioByteArrayList.size() > 0) {
-                    Object[] arrayOfObjects = audioByteArrayList.toArray();
-                    byte[] bytes = new byte[arrayOfObjects.length];
-                    for (int i = 0; i < arrayOfObjects.length; i++) {
-                        bytes[i] = (byte) arrayOfObjects[i];
-                    }
-                    os.write(bytes, 0, bytes.length);
+//                if (audioByteArrayList != null && audioByteArrayList.size() > 0) {
+//                    Object[] arrayOfObjects = audioByteArrayList.toArray();
+//                    byte[] bytes = new byte[arrayOfObjects.length];
+//                    for (int i = 0; i < arrayOfObjects.length; i++) {
+//                        bytes[i] = (byte) arrayOfObjects[i];
+//                    }
+//                    Log.e(TAG, "Arr" + bytes.length);
+//                    os.write(bytes, 0, bytes.length);
 
                     copyWaveFile(tempAudioDataFileName, audioWavFileName);
                     deleteTempFile();
-                }
+//                }
                 os.close();
 
             }
@@ -512,8 +514,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 }
             }, lengthInSec * 1000);
 //        startRecording();
-        }
-        else {
+        } else {
             Toast.makeText(getApplicationContext(), "Enter seconds greater than 0", Toast.LENGTH_LONG).show();
         }
     }
@@ -530,50 +531,23 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             return null;
         }
     }
-
-    private void wavToData() throws IOException {
+    private void writeToRaw() {
         try {
-//            String outputFile =
-//                    Environment.getExternalStorageDirectory().getAbsolutePath() + getAudioFilename()+ "";
+            if (audioByteArrayList != null && audioByteArrayList.size() > 0) {
 
-            InputStream inStream = getApplicationContext().getResources().openRawResource(R.raw.sample);
-            byte[] wavInBytes = new byte[inStream.available()];
-            Log.d("TEST", "********");
-            Log.d("TEST", "wavToData: "+wavInBytes.length);
-
-//            byte[] wavInBytes = convertStreamToByteArray(inStream);
-
-            short[] audioShorts = bytesToShort(wavInBytes);
-            Log.d("TEST", "********");
-            Log.d("TEST", "audioShorts: "+audioShorts.length);
-            int chunks = audioShorts.length/(lengthInSec*2);
-            Log.d("TEST", "chunks: "+chunks);
-
-            for (int i = 0; i < audioShorts.length;) {
-                i = i+28677;
+                bytes = new byte[audioByteArrayList.size()];
+                for (int i = 0; i < audioByteArrayList.size(); i++) {
+                    bytes[i] = audioByteArrayList.get(i).byteValue();
+                }
+                os.write(bytes, 0, bytes.length);
+                audioByteArrayList.clear();
+                bytes = null;
             }
-        }catch (Exception|Error e){
+        } catch (IOException e) {
+            Log.i(TAG, "Error while wriiting to file");
             e.printStackTrace();
         }
+
     }
-
-    public static byte[] convertStreamToByteArray(InputStream is) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        byte[] buff = new byte[10240];
-        int i = Integer.MAX_VALUE;
-        while ((i = is.read(buff, 0, buff.length)) > 0) {
-            baos.write(buff, 0, i);
-        }
-
-        return baos.toByteArray(); // be sure to close InputStream in calling function
-    }
-    public short[] bytesToShort(byte[] bytes) {
-
-        short[] shorts = new short[bytes.length/2];
-        ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shorts);
-
-        return shorts;
-    }
-
 
 }
