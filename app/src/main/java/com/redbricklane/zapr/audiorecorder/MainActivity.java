@@ -492,6 +492,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
            startbtn.setEnabled(false);
            if (lengthOfSample.getText().toString().length() > 0) {
                lengthInSec = Integer.parseInt(lengthOfSample.getText().toString());
+               fileName = "" + System.currentTimeMillis();
                new Recording().execute();
                Toast.makeText(getApplicationContext(), "Recording Started", Toast.LENGTH_LONG).show();
            } else {
@@ -510,7 +511,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
            Toast.makeText(getApplicationContext(), "Give permissions to start recording", Toast.LENGTH_LONG).show();
 
        }
-        fileName = "" + System.currentTimeMillis();
     }
 
 
