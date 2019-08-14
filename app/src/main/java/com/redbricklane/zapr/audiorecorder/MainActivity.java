@@ -1,11 +1,9 @@
 package com.redbricklane.zapr.audiorecorder;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
-import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -33,42 +31,42 @@ import java.util.Arrays;
 
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
-    Context context;
 
-    private              Button      startbtn;
-    private              AudioRecord mRecorder;
-    private              MediaPlayer mPlayer;
-    private static final String      TAG                           = "#AUDIO#";
-    private static       String      mFileName                     = null;
-    public static final  int         REQUEST_AUDIO_PERMISSION_CODE = 1;
-    private              int         RECORDER_SAMPLERATE           = 0;
-    private final        int         RECORDER_CHANNELS             = AudioFormat.CHANNEL_IN_MONO;
-    private final        int         RECORDER_AUDIO_ENCODING       = AudioFormat.ENCODING_PCM_16BIT;
 
-    private static final String   AUDIO_RECORDER_FOLDER       = "AudioRecorder";
-    private static final String   AUDIO_RECORDER_TEMP_FILE    = "record_temp.raw";
-    private static final String   AUDIO_RECORDER_FILE_EXT_WAV = ".wav";
-    private              boolean  isRecording                 = false;
-    private              EditText lengthOfSample, fileNameTxt, arrayLen;
-    private int frequency, lengthInSec, bufferSize;
+    //UI
+    private Button   startbtn;
+    private EditText lengthOfSample, fileNameTxt, arrayLen;
+
+    //variables
+    private static final String TAG = "#AUDIO#";
+
+    private             AudioRecord mRecorder;
+    public static final int         REQUEST_AUDIO_PERMISSION_CODE = 1;
+    private             int         RECORDER_SAMPLERATE           = 0;
+    private final       int         RECORDER_CHANNELS             = AudioFormat.CHANNEL_IN_MONO;
+    private final       int         RECORDER_AUDIO_ENCODING       = AudioFormat.ENCODING_PCM_16BIT;
+
+    private static final String  AUDIO_RECORDER_FOLDER       = "AudioRecorder";
+    private static final String  AUDIO_RECORDER_TEMP_FILE    = "record_temp.raw";
+    private static final String  AUDIO_RECORDER_FILE_EXT_WAV = ".wav";
+    private              boolean isRecording                 = false;
+    private              int     frequency, lengthInSec, bufferSize;
     private String             fileName;
     final   ArrayList<Byte>    audioByteArrayList = new ArrayList<>();
     private ArrayList<short[]> sampleForASequence = new ArrayList<>();
+    private byte[]             bytes;
 
-    private String fileId;
-    String audioWavFileName, tempAudioDataFileName;
-    private              FileOutputStream os;
-    private              int[]            samplePerSequence;
-    private              int              seqNum     = 0;
-    private              boolean          skipBuffer = true;
-    private              int              skipItr    = 0;
-    private              int              arraySize  = 4096;
-    private              Spinner          spinner;
-    private static final String[]         values     = {"8000", "16000", "32000", "44100", "48000"};
-    ArrayAdapter<String> adapter;
-    static Object[] EmptyObjArray = new Object[10000];
+    private String audioWavFileName, tempAudioDataFileName;
+    private              FileOutputStream     os;
+    private              int                  seqNum     = 0;
+    private              boolean              skipBuffer = true;
+    private              int                  skipItr    = 0;
+    private              int                  arraySize  = 4096;
+    private              Spinner              spinner;
+    private static final String[]             values     = {"8000", "16000", "32000", "44100", "48000"};
+    private              ArrayAdapter<String> adapter;
 
-    byte[]  bytes;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,6 +79,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         startbtn = (Button) findViewById(R.id.startRec);
         spinner = (Spinner) findViewById(R.id.spinner);
         spinner.setOnItemSelectedListener(this);
+
         adapter = new ArrayAdapter<String>(MainActivity.this,
                 android.R.layout.simple_spinner_item, values);
 
@@ -105,13 +104,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 break;
         }
     }
-
-    public boolean CheckPermissions() {
-        int result = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        int result1 = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.RECORD_AUDIO);
-        return result == PackageManager.PERMISSION_GRANTED && result1 == PackageManager.PERMISSION_GRANTED;
-    }
-
 
     private String getFilename() {
         String filepath = Environment.getExternalStorageDirectory().getPath();
@@ -156,6 +148,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         int secondsRecorded = 0;
         int sampleLengthInSeconds = 1 * lengthInSec;
         int sampleLengthInSecInShort = 0;
+
         // The granularity of each chunk is set to 1
         int sampleLengthForASequence = 1;
         int sampleLengthInShortForASequence = 0;
@@ -189,7 +182,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         try {
             RECORDER_SAMPLERATE = frequency;
-            samplePerSequence = new int[sampleLengthInSecInShort * arraySize];
 
             bufferSize = AudioRecord.getMinBufferSize(
                     RECORDER_SAMPLERATE,
@@ -264,13 +256,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                             if (sampleForASequence.size() >= sampleLengthInShortForASequence) {
                                 Log.i(TAG, "Sample recorded at :  " + System.currentTimeMillis() + "dd/MM/yyyy hh:mm:ss.SSS");
                                 sampleForASequence.clear();
-//                                writeToRaw();
                                 bytes = new byte[audioByteArrayList.size()];
-                                for(int i = 0; i < audioByteArrayList.size(); i++) {
+                                for (int i = 0; i < audioByteArrayList.size(); i++) {
                                     bytes[i] = audioByteArrayList.get(i).byteValue();
                                 }
-                                Log.i(TAG, "Arr "+bytes.length);
-
+//                                Log.i(TAG, "Arr " + bytes.length);
                                 os.write(bytes, 0, bytes.length);
                                 audioByteArrayList.clear();
                                 bytes = null;
@@ -326,8 +316,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 //                    Log.e(TAG, "Arr" + bytes.length);
 //                    os.write(bytes, 0, bytes.length);
 
-                    copyWaveFile(tempAudioDataFileName, audioWavFileName);
-                    deleteTempFile();
+                copyWaveFile(tempAudioDataFileName, audioWavFileName);
+                deleteTempFile();
 //                }
                 os.close();
 
@@ -441,7 +431,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         header[41] = (byte) ((totalAudioLen >> 8) & 0xff);
         header[42] = (byte) ((totalAudioLen >> 16) & 0xff);
         header[43] = (byte) ((totalAudioLen >> 24) & 0xff);
-//        Log.i(TAG, "WriteWaveFileHeader3");
 
         out.write(header, 0, 44);
     }
@@ -498,25 +487,29 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     public void startRecording(View view) {
-        lengthInSec = Integer.parseInt(lengthOfSample.getText().toString());
-        arraySize = (Integer.parseInt(arrayLen.getText().toString())) / 2;
-        Log.i(TAG, "arraysize " + arraySize);
-        fileName = "" + System.currentTimeMillis();
-        if (lengthInSec > 0) {
-            startbtn.setEnabled(false);
-            Toast.makeText(getApplicationContext(), "Recording Started", Toast.LENGTH_LONG).show();
-            new Recording().execute();
-            startbtn.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    //enable the button
-                    startbtn.setEnabled(true);
-                }
-            }, lengthInSec * 1000);
-//        startRecording();
+        if (lengthOfSample.getText().toString().length() > 0) {
+            lengthInSec = Integer.parseInt(lengthOfSample.getText().toString());
         } else {
-            Toast.makeText(getApplicationContext(), "Enter seconds greater than 0", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "Enter the seconds to be recorded", Toast.LENGTH_LONG);
+
         }
+       if(CheckPermissions()){
+           startbtn.setEnabled(false);
+           Toast.makeText(getApplicationContext(), "Recording Started", Toast.LENGTH_LONG).show();
+           new Recording().execute();
+           startbtn.postDelayed(new Runnable() {
+               @Override
+               public void run() {
+                   //enable the button
+                   startbtn.setEnabled(true);
+               }
+           }, lengthInSec * 1000);
+       }
+       else {
+           Toast.makeText(getApplicationContext(), "Give permissions to start recording", Toast.LENGTH_LONG).show();
+
+       }
+        fileName = "" + System.currentTimeMillis();
     }
 
 
@@ -531,23 +524,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             return null;
         }
     }
-    private void writeToRaw() {
-        try {
-            if (audioByteArrayList != null && audioByteArrayList.size() > 0) {
 
-                bytes = new byte[audioByteArrayList.size()];
-                for (int i = 0; i < audioByteArrayList.size(); i++) {
-                    bytes[i] = audioByteArrayList.get(i).byteValue();
-                }
-                os.write(bytes, 0, bytes.length);
-                audioByteArrayList.clear();
-                bytes = null;
-            }
-        } catch (IOException e) {
-            Log.i(TAG, "Error while wriiting to file");
-            e.printStackTrace();
-        }
-
+    public boolean CheckPermissions() {
+        int result = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        int result1 = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.RECORD_AUDIO);
+        return result == PackageManager.PERMISSION_GRANTED && result1 == PackageManager.PERMISSION_GRANTED;
     }
 
 }
