@@ -27,7 +27,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
@@ -365,13 +364,14 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 out.write(data);
 
             }
-            Log.i(TAG, "Wav array: " + Arrays.toString(data));
 
             in.close();
             out.close();
         } catch (FileNotFoundException e) {
+            Log.i(TAG, "FileNotFoundException ");
             e.printStackTrace();
         } catch (IOException e) {
+            Log.i(TAG, "Error doing I/O operation ");
             e.printStackTrace();
         }
     }
@@ -520,6 +520,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             try {
                 startRecording();
             } catch (IOException e) {
+                Log.i(TAG, "Error starting recording task");
                 e.printStackTrace();
             }
             return null;
