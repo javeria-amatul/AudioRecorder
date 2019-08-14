@@ -487,16 +487,17 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     public void startRecording(View view) {
-        if (lengthOfSample.getText().toString().length() > 0) {
-            lengthInSec = Integer.parseInt(lengthOfSample.getText().toString());
-        } else {
-            Toast.makeText(getApplicationContext(), "Enter the seconds to be recorded", Toast.LENGTH_LONG);
 
-        }
        if(CheckPermissions()){
            startbtn.setEnabled(false);
-           Toast.makeText(getApplicationContext(), "Recording Started", Toast.LENGTH_LONG).show();
-           new Recording().execute();
+           if (lengthOfSample.getText().toString().length() > 0) {
+               lengthInSec = Integer.parseInt(lengthOfSample.getText().toString());
+               new Recording().execute();
+               Toast.makeText(getApplicationContext(), "Recording Started", Toast.LENGTH_LONG).show();
+           } else {
+               Toast.makeText(getApplicationContext(), "Enter the seconds to be recorded", Toast.LENGTH_LONG).show();
+           }
+
            startbtn.postDelayed(new Runnable() {
                @Override
                public void run() {
